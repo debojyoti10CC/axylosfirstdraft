@@ -1,464 +1,508 @@
-# 🚀 Agent DNS + HTTP 402 + Blockchain Settlement Mesh Network
+# AgentDNS
 
-An agentic encrypted DNS server that enables peer-to-peer negotiation with HTTP 402 payments and blockchain settlement. Perfect for hackathons.
+**AgentDNS** is a decentralized prototype for an **autonomous AI agent economy**. It allows software agents to discover each other over a peer‑to‑peer mesh network, negotiate prices for services, pay using **HTTP 402 micropayments (x402)**, and optionally settle transactions on blockchain through the Elsa execution stack.
 
-```
-┌─────────────────────────────────────────┐
-│   Laptop 1 (SELLER)                     │
-│   ┌─────────────────────────────────┐   │
-│   │ Agent DNS Server (Port 8080)    │   │
-│   │ P2P Mesh (Port 9999)            │   │
-│   │ Negotiator Agent (Hardened)     │   │
-│   │ HTTP 402 Payment Handler        │   │
-│   │ Blockchain Settlement Engine    │   │
-│   └─────────────────────────────────┘   │
-│              ↕ UDP Mesh ↕                │
-│   ┌─────────────────────────────────┐   │
-│   │ Laptop 2 (BUYER)                │   │
-│   │ Agent DNS Server (Port 8081)    │   │
-│   │ P2P Mesh (Port 9998)            │   │
-│   │ Negotiator Agent (Flexible)     │   │
-│   │ HTTP 402 Payment Handler        │   │
-│   │ Blockchain Settlement Engine    │   │
-│   └─────────────────────────────────┘   │
-└─────────────────────────────────────────┘
-```
-
-## 📋 Features
-
-✅ **Agentic Negotiation**: AI agents negotiate prices autonomously  
-✅ **Encrypted DNS**: AES-256 encrypted DNS-over-HTTPS style communication  
-✅ **HTTP 402 Payments**: Standard payment protocol for web services  
-✅ **Blockchain Settlement**: Auto-settle negotiations on Ethereum  
-✅ **P2P Mesh Network**: UDP-based peer discovery and messaging  
-✅ **Dual Role Support**: Seller/Buyer agents with different strategies  
-✅ **CLI Interface**: Interactive terminal UI to manage negotiations  
-✅ **Two-Laptop Demo**: Easy setup for hackathon demos  
-
-## 🛠 Installation
-
-### Prerequisites
-- Node.js 16+ 
-- Ethereum test wallet with test ETH (Sepolia/Goerli)
-- Two laptops/machines with network connectivity
-
-### Setup
-
-```bash
-# Clone or download the project
-cd agent-dns-mesh
-
-# Install dependencies
-npm install
-
-# Set your Anthropic API key (optional, for advanced features)
-export ANTHROPIC_API_KEY="your-key-here"
-```
-
-## 🚀 Quick Start (Single Machine Demo)
-
-### Terminal 1: Start Seller Agent
-```bash
-npm run seller
-# Starts on http://localhost:8080
-# Mesh on 0.0.0.0:9999
-```
-
-### Terminal 2: Start Buyer Agent
-```bash
-npm run buyer
-# Starts on http://localhost:8081
-# Mesh on 0.0.0.0:9998
-# Connects to seller on localhost:9999
-```
-
-### Terminal 3: Interact with CLI
-```bash
-# As Buyer
-node cli.js --server http://localhost:8081 --role buyer
-
-# As Seller
-node cli.js --server http://localhost:8080 --role seller
-```
-
-## 🌐 Two-Laptop Setup (Actual Hackathon Demo)
-
-### Laptop 1 (Seller) - IP: 192.168.1.100
-
-```bash
-# Get your IP
-ifconfig | grep "inet "  # Linux/Mac
-ipconfig              # Windows
-
-npm run seller
-# Server: http://192.168.1.100:8080
-# Mesh: 0.0.0.0:9999
-```
-
-### Laptop 2 (Buyer) - IP: 192.168.1.101
-
-```bash
-# Connect to Seller's mesh network
-npm run buyer
-# But first set PEER_IP environment variable:
-
-PEER_IP=192.168.1.100 node agent-dns-server.js \
-  --port 8081 \
-  --network-port 9998 \
-  --role buyer \
-  --peer 192.168.1.100:9999
-
-# Or use the CLI to connect:
-node cli.js --server http://localhost:8081 --role buyer
-# Then select option [7] to connect to peer
-```
-
-## 📖 Usage Examples
-
-### Example 1: Complete Negotiation Flow
-
-```bash
-# Terminal 1: Check seller status
-curl http://localhost:8080/health
-
-# Terminal 2: Buyer initiates negotiation
-curl -X POST http://localhost:8081/negotiate/initiate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "service": "dns-query-service",
-    "initialOffer": 0.01,
-    "counterpartyId": "seller-node-123"
-  }'
-
-# Response:
-# {
-#   "negotiationId": "abc123def456...",
-#   "negotiation": {
-#     "id": "abc123def456...",
-#     "offers": [{ "party": "buyer", "amount": 0.01, "timestamp": ... }],
-#     "status": "ACTIVE"
-#   }
-# }
-
-# Terminal 2: Buyer makes improved offer
-curl -X POST http://localhost:8081/negotiate/abc123def456/offer \
-  -H "Content-Type: application/json" \
-  -d '{ "amount": 0.015 }'
-
-# Response shows agent's counter-decision:
-# {
-#   "agentDecision": {
-#     "action": "COUNTER",
-#     "newOffer": 0.012,
-#     "reason": "Counter to midpoint for faster settlement",
-#     "timestamp": ...
-#   }
-# }
-
-# Continue negotiating until ACCEPT
-```
-
-### Example 2: HTTP 402 Payment Challenge
-
-```bash
-# Get payment challenge
-curl "http://localhost:8081/pay/challenge?amount=0.01&service=dns"
-
-# Response:
-# {
-#   "status": "PAYMENT_REQUIRED",
-#   "challenge": {
-#     "id": "payment-challenge-xyz",
-#     "amount": 0.01,
-#     "service": "dns",
-#     "expiresAt": 1234567890
-#   },
-#   "paymentInstructions": {
-#     "to": "0x742d35Cc6634C0532925a3b844Bc1e0d0f18E9e3",
-#     "amount": 0.01
-#   }
-# }
-```
-
-### Example 3: Blockchain Settlement
-
-```bash
-# After payment is made on-chain, verify and settle
-curl -X POST http://localhost:8081/pay/verify \
-  -H "Content-Type: application/json" \
-  -d '{
-    "challengeId": "payment-challenge-xyz",
-    "transactionHash": "0xabcd1234...",
-    "negotiationId": "nego-abc123"
-  }'
-
-# Response:
-# {
-#   "status": "SETTLEMENT_COMPLETE",
-#   "success": true,
-#   "transactionHash": "0xabcd5678...",
-#   "blockNumber": 12345678,
-#   "negotiationId": "nego-abc123"
-# }
-```
-
-### Example 4: P2P Mesh Network
-
-```bash
-# Check connected peers
-curl http://localhost:8080/mesh/peers
-
-# Response:
-# {
-#   "peerId": "abc123def456",
-#   "peers": [
-#     { "id": "192.168.1.101:9998", "host": "192.168.1.101", "port": 9998 }
-#   ]
-# }
-
-# Manually connect to a peer (if not auto-discovered)
-curl -X POST http://localhost:8080/mesh/connect \
-  -H "Content-Type: application/json" \
-  -d '{
-    "host": "192.168.1.102",
-    "port": 9999
-  }'
-```
-
-### Example 5: Check Wallet
-
-```bash
-curl http://localhost:8080/wallet/balance
-
-# Response:
-# {
-#   "address": "0x742d35Cc6634C0532925a3b844Bc1e0d0f18E9e3",
-#   "balance": "2.5 ETH"
-# }
-```
-
-## 🎯 CLI Interactive Mode
-
-Run the CLI for an interactive experience:
-
-```bash
-node cli.js --server http://localhost:8081 --role buyer
-```
-
-Menu options:
-- **[1]** Check if server is running
-- **[2]** Start a new negotiation
-- **[3]** Make a counter offer
-- **[4]** Check negotiation status
-- **[5]** Request payment challenge
-- **[6]** Verify payment & settle on blockchain
-- **[7]** Connect to another peer
-- **[8]** View all mesh peers
-- **[9]** Check wallet balance
-
-## 🔐 Encryption Details
-
-The system uses **AES-256-CBC** for encrypted communication:
-
-```javascript
-// Shared encryption in P2P messages
-const encryption = new DNSEncryption(sharedSecret);
-const encrypted = encryption.encrypt(data);
-const decrypted = encryption.decrypt(encrypted.encrypted, encrypted.iv);
-```
-
-## 🤖 Agentic Negotiation Logic
-
-The agents follow a simple but effective strategy:
-
-**Seller Agent (Hardened)**:
-- Asks for higher prices
-- Slow to negotiate
-- Prefers to reject unless gap < 5%
-
-**Buyer Agent (Flexible)**:
-- Starts with lower offers
-- Quick to compromise
-- Seeks midpoint solution
-
-This creates realistic negotiations! Example:
+The system demonstrates the full lifecycle of **agent‑to‑agent commerce**:
 
 ```
-Round 1: Buyer offers 0.01 ETH
-         Seller counters: 0.015 ETH
-         
-Round 2: Buyer counters: 0.012 ETH
-         Seller accepts (gap < 5%)
-         
-✅ Settlement: 0.012 ETH on blockchain
+Discovery → Negotiation → Payment Challenge → Micropayment → Execution → Settlement
 ```
 
-## 🧪 Testing
-
-### Scenario 1: Two-Agent Negotiation
-```bash
-# Seller
-npm run seller
-
-# Buyer (in another terminal)
-npm run buyer
-
-# Buyer CLI (in third terminal)
-node cli.js --server http://localhost:8081 --role buyer
-# Select [2] Initiate Negotiation
-# Service: "smart-contract-analysis"
-# Initial Offer: 0.05
-```
-
-### Scenario 2: Mesh Network Discovery
-Start both servers, they'll discover each other via mesh protocol. Verify with:
-```bash
-curl http://localhost:8080/mesh/peers
-```
-
-### Scenario 3: Payment Flow
-```bash
-# Get challenge
-curl "http://localhost:8081/pay/challenge?amount=0.01&service=test"
-
-# Simulate payment on test network (use Faucet for ETH)
-# Then verify
-curl -X POST http://localhost:8081/pay/verify \
-  -d '{"challengeId":"...", "transactionHash":"0x..."}'
-```
-
-## 🏗 Architecture
-
-### Core Components
-
-1. **AgenticNegotiator**
-   - Manages negotiation state
-   - Generates agent decisions
-   - Tracks offer history
-
-2. **DNSEncryption**
-   - AES-256-CBC encryption/decryption
-   - IV generation for each message
-   - Shared secret management
-
-3. **P2PMeshNetwork**
-   - UDP-based peer communication
-   - Automatic peer discovery
-   - Message broadcasting
-
-4. **HTTP402Handler**
-   - Payment challenge generation
-   - Challenge expiration (5 min default)
-   - Payment verification
-
-5. **BlockchainSettlement**
-   - Ethereum wallet integration
-   - Transaction submission
-   - Settlement tracking
-
-6. **Express API Server**
-   - RESTful endpoints
-   - JSON request/response
-   - Status codes (402 for payment required)
-
-## 🌍 Environment Variables
-
-```bash
-# Required for production
-ANTHROPIC_API_KEY="sk-..."          # Claude API for advanced negotiation
-ETHEREUM_PRIVATE_KEY="0x..."        # Wallet private key
-ETHEREUM_RPC_URL="https://..."      # Ethereum RPC endpoint
-
-# Optional
-NODE_ENV="production"               # Set to 'production' for safety
-LOG_LEVEL="info"                    # debug, info, warn, error
-```
-
-## 🐛 Debugging
-
-### Enable Verbose Logging
-```bash
-# Add to the top of agent-dns-server.js
-process.env.DEBUG = '*';
-```
-
-### Check Network Connectivity
-```bash
-# Verify mesh port is open
-lsof -i :9999
-netstat -an | grep 9999
-```
-
-### Test Blockchain Connection
-```bash
-# Quick balance check
-curl http://localhost:8080/wallet/balance
-```
-
-### Capture Network Traffic
-```bash
-# Monitor mesh messages (if UDP debug enabled)
-tcpdump -i lo port 9999
-```
-
-## 📊 Expected Output
-
-When you run `npm run buyer`:
-
-```
-╔═══════════════════════════════════════════════════════════════╗
-║  Agent DNS + HTTP 402 + Blockchain Settlement                ║
-║  Role: BUYER                                                  ║
-║  Port: 8081                                                   ║
-║  Network Port: 9998                                           ║
-╚═══════════════════════════════════════════════════════════════╝
-
-✅ P2P Mesh listening on port 9998
-✅ Connected to peer: 192.168.1.100:9999
-
-🚀 HTTP 402 Server running on http://localhost:8081
-🔐 Encrypted DNS ready
-💰 Blockchain: http://localhost:8545
-👛 Wallet: 0x742d35Cc6634C0532925a3b844Bc1e0d0f18E9e3
-
-📖 Available endpoints:
-  POST /negotiate/initiate
-  GET  /negotiate/:negotiationId
-  POST /negotiate/:negotiationId/offer
-  GET  /pay/challenge?amount=0.01&service=dns
-  POST /pay/verify
-  POST /mesh/connect
-  GET  /wallet/balance
-```
-
-## 🎓 Hackathon Tips
-
-1. **Demo Wallets**: Use testnet faucets to get free test ETH
-2. **Local Blockchain**: Run Ganache or Hardhat node for instant transactions
-3. **Mesh Discovery**: Have both servers start before making requests
-4. **Visual Aid**: Show the mesh network with `GET /mesh/peers`
-5. **Payment Flow**: Most impressive part—show HTTP 402 → blockchain settlement
-6. **Agent Decisions**: Pretty-print agent logic decisions for judges
-
-## 🚀 Future Enhancements
-
-- [ ] Integrate Claude API for actual AI negotiation
-- [ ] Support multiple negotiation rounds with learning
-- [ ] Add order book for batch negotiations
-- [ ] Implement reputation system
-- [ ] Support multiple blockchains (Polygon, Arbitrum, etc)
-- [ ] WebSocket support for real-time updates
-- [ ] Persistent negotiation database
-- [ ] Agent strategy templates (aggressive, conservative, balanced)
-
-## 📝 License
-
-MIT - Use freely for hackathons!
-
-## 🤝 Contributing
-
-Found a bug? Want to add features? Create an issue or PR!
+It was designed as a hackathon‑friendly architecture demonstrating autonomous economic behavior between AI agents.
 
 ---
 
-**Built for Hackathons | Ethereum | Agents | P2P Networks**
+# Core Concept
+
+Traditional APIs rely on:
+
+* API keys
+* subscriptions
+* centralized billing
+
+AgentDNS introduces a new model where **AI agents pay per request automatically**.
+
+Example flow:
+
+1. Buyer agent requests a service.
+2. Seller agent negotiates price.
+3. Seller responds with **HTTP 402 Payment Required**.
+4. Buyer signs a payment using a crypto wallet.
+5. Service executes and optionally settles on-chain.
+
+---
+```mermaid
+flowchart LR
+
+subgraph User_Layer["User Layer"]
+U["User / CLI Interface"]
+end
+
+subgraph Agent_Layer["Agent Layer"]
+B["Buyer Agent<br/>OpenClaw"]
+S["Seller Agent<br/>OpenClaw"]
+end
+
+subgraph Networking_Layer["Networking Layer"]
+M["Agent DNS Mesh Network<br/>UDP P2P"]
+N["Negotiation Protocol<br/>Offer → Counter → Accept"]
+end
+
+subgraph Payment_Layer["Payment Layer"]
+P1["HTTP 402 Payment Challenge"]
+P2["Elsa X402 Payment Client"]
+P3["X-PAYMENT Header<br/>ECDSA Signed"]
+end
+
+subgraph Execution_Layer["Execution Layer"]
+E1["Elsa API Execution"]
+E2["Swap Quote / Portfolio Analysis"]
+E3["Swap Execution Tool"]
+end
+
+subgraph Blockchain_Layer["Blockchain Layer"]
+D["DEX / DeFi Protocols"]
+C["EVM Blockchain<br/>Base / Ethereum"]
+end
+
+U --> B
+U --> S
+
+B --> M
+S --> M
+
+M --> N
+N --> P1
+
+P1 --> P2
+P2 --> P3
+
+P3 --> E1
+
+E1 --> E2
+E1 --> E3
+
+E3 --> D
+D --> C
+```
+# Features
+
+## Agent Discovery (P2P Mesh)
+
+Agents discover each other over a **UDP peer‑to‑peer mesh network**.
+
+* no central registry
+* dynamic node discovery
+* LAN‑based communication
+
+Each node broadcasts its presence and listens for other agents.
+
+---
+
+## Agent Negotiation Protocol
+
+Agents negotiate service prices using a structured negotiation protocol.
+
+Negotiation states:
+
+```
+NEGO_OFFER
+→ COUNTER
+→ NEGO_ACCEPT
+→ PAYMENT_402_REQUIRED
+→ PAYMENT_402_COMPLETED
+```
+
+Agents follow different strategies:
+
+**Seller agent**
+
+* starts high
+* negotiates slowly
+
+**Buyer agent**
+
+* starts low
+* searches for midpoint
+
+---
+
+## HTTP 402 Micropayments (x402)
+
+Instead of API keys, services require **cryptographically signed micropayments**.
+
+The client generates an `X-PAYMENT` header using an ECDSA wallet signature.
+
+Example request:
+
+```
+POST /api/get_swap_quote
+X-PAYMENT: signed-token
+```
+
+Payments are verified through the x402 API.
+
+---
+
+## Elsa Execution Layer
+
+Payments and DeFi actions are executed using the Elsa execution infrastructure.
+
+Capabilities include:
+
+* wallet analysis
+* token price queries
+* swap quotes
+* portfolio analysis
+* token swaps
+
+Execution tools can run in:
+
+* **dry‑run mode** (safe demo)
+* **live execution mode** (on‑chain swaps)
+
+---
+
+## Autonomous Trading Agents
+
+Agents can act as **automated DeFi trading bots**.
+
+Capabilities include:
+
+* monitoring token prices
+* analyzing portfolios
+* suggesting yield strategies
+* executing swaps
+
+Each action may require a micropayment through the x402 protocol.
+
+---
+
+# System Architecture
+
+```
+User / CLI
+      ↓
+OpenClaw Agent
+      ↓
+Agent DNS Mesh Network
+      ↓
+Negotiation Protocol
+      ↓
+HTTP 402 Payment
+      ↓
+Elsa X402 Client
+      ↓
+DeFi / Blockchain
+```
+
+Layers:
+
+| Layer            | Purpose                       |
+| ---------------- | ----------------------------- |
+| Agent Layer      | reasoning and decision making |
+| Networking Layer | peer discovery + negotiation  |
+| Payment Layer    | x402 micropayments            |
+| Execution Layer  | DeFi interactions             |
+```mermaid
+sequenceDiagram
+    participant User
+    participant Buyer as Buyer Agent (OpenClaw)
+    participant Mesh as Agent DNS Mesh
+    participant Seller as Seller Agent
+    participant Elsa as Elsa X402 Client
+    participant API as x402 API
+    participant Chain as Blockchain / DeFi
+
+    User->>Buyer: Start Trade Request (Token + Amount)
+
+    rect rgb(30,30,30)
+        note right of Buyer: Phase 1 - Agent Discovery
+        Buyer->>Mesh: Broadcast presence
+        Mesh-->>Seller: Peer discovered
+    end
+
+    rect rgb(40,40,40)
+        note right of Buyer: Phase 2 - Negotiation
+        Buyer->>Seller: NEGO_OFFER
+        Seller-->>Buyer: COUNTER
+        Buyer->>Seller: NEGO_ACCEPT
+    end
+
+    rect rgb(50,50,50)
+        note right of Seller: Phase 3 - Payment Challenge
+        Seller->>Buyer: HTTP 402 Payment Required
+    end
+
+    rect rgb(60,60,60)
+        note right of Buyer: Phase 4 - Micropayment
+        Buyer->>Elsa: Generate X-PAYMENT Header
+        Elsa->>API: Submit Signed Payment
+        API-->>Elsa: Payment Verified
+    end
+
+    rect rgb(70,70,70)
+        note right of Seller: Phase 5 - Execution
+        Seller->>Chain: Execute Swap / Service
+        Chain-->>Seller: Transaction Hash
+    end
+
+    rect rgb(80,80,80)
+        note right of System: Phase 6 - Settlement
+        Seller-->>Buyer: PAYMENT_402_COMPLETED
+        Buyer-->>User: Trade Successful
+    end
+```
+---
+
+# Project Structure
+
+```
+.
+├── agent-dns-server.js
+├── agent-dns-openclaw-integration.js
+├── lib
+│   ├── ElsaX402PaymentClient.js
+│   ├── OpenClawAgent.js
+│   └── P2PMeshNetwork.js
+├── cli
+│   └── index.js
+├── routes
+│   └── trade.js
+└── utils
+    └── encryption.js
+```
+
+---
+
+# Installation
+
+### Requirements
+
+* Node.js 18+
+* npm or yarn
+
+Clone the repository:
+
+```
+git clone <repo-url>
+cd axylossss
+npm install
+```
+
+---
+
+# Environment Variables
+
+Create a `.env` file:
+
+```
+PORT=8080
+MESH_PORT=9999
+AGENT_ID=agent1
+
+AES_MESH_KEY=32BYTE_SECRET
+
+ELSA_API_BASE=https://x402-api.heyelsa.ai
+ELSA_PRIVATE_KEY=YOUR_PRIVATE_KEY
+
+ELSA_ENABLE_EXECUTION_TOOLS=false
+```
+
+Important:
+
+* never commit private keys
+* enable execution tools only when ready for live transactions
+
+---
+
+# Running the System
+
+Start the seller node:
+
+```
+npm run seller
+```
+
+Start the buyer node:
+
+```
+npm run buyer
+```
+
+Run the interactive CLI:
+
+```
+npm run cli
+```
+
+Example CLI command:
+
+```
+propose trade WETH 1
+```
+
+---
+
+# Example Negotiation Flow
+
+```
+Seller: Offer $2600
+Buyer: Counter $2400
+Seller: Counter $2500
+Buyer: Accept
+
+→ HTTP 402 Payment Required
+→ Payment Signed
+→ Payment Verified
+→ Swap Executed
+```
+
+---
+
+# API Endpoints
+
+### Health Check
+
+```
+GET /health
+```
+
+---
+
+### Get Token Price
+
+```
+GET /price/:token
+```
+
+Example:
+
+```
+GET /price/WETH
+```
+
+---
+
+### Portfolio Analysis
+
+```
+GET /portfolio
+```
+
+---
+
+### Propose Trade
+
+```
+POST /trade/propose
+```
+
+Example payload:
+
+```
+{
+  "service": "swap",
+  "pair": "USDC/WETH",
+  "amount": 100
+}
+```
+
+---
+
+### Execute Trade
+
+```
+POST /trade/execute
+```
+
+---
+
+### Natural Language Command
+
+```
+POST /openclaw/command
+```
+
+Example:
+
+```
+"check weth price"
+```
+
+---
+
+# Demo Mode
+
+For hackathon demos the system includes **fallback logic**.
+
+If external APIs fail:
+
+* mock prices are returned
+* swaps run as dry‑runs
+* responses return `{ status: "demo mode" }`
+
+This ensures the demo never crashes.
+
+---
+
+# Security Notes
+
+* private keys must never be committed
+* AES mesh encryption protects peer traffic
+* payment signatures prevent spoofing
+* rate limits protect budgets
+
+---
+
+# Future Improvements
+
+Potential upgrades:
+
+* integrate real LLM reasoning
+* add agent reputation systems
+* implement on‑chain service registry
+* create agent marketplace UI
+* add decentralized identity for agents
+
+---
+
+# Example Use Cases
+
+AgentDNS can enable:
+
+* AI trading bots negotiating execution fees
+* decentralized API marketplaces
+* autonomous DeFi portfolio managers
+* agent‑to‑agent service markets
+
+---
+
+# Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+---
+
+# License
+
+MIT License
+
+---
+
+# Summary
+
+AgentDNS demonstrates a new internet primitive:
+
+**autonomous agents that can discover, negotiate, pay, and transact without humans.**
+
+It combines:
+
+* P2P networking
+* negotiation protocols
+* HTTP 402 micropayments
+* blockchain execution
+
+into a working prototype of an **AI‑driven economic network.**
